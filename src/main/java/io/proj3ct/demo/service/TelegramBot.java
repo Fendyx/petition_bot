@@ -23,7 +23,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -60,10 +62,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.botState = BotState.DEFAULT;
         this.taskMap = new HashMap<>();
         List<BotCommand> listOfCommands = new ArrayList<>();
-        listOfCommands.add(new BotCommand("/start", "get started"));
-        listOfCommands.add(new BotCommand("/info", "info about bot"));
-        listOfCommands.add(new BotCommand("/help", "how to work with me"));
-        listOfCommands.add(new BotCommand("/newtask", "Створити нову петицію"));
+        listOfCommands.add(new BotCommand("/start", "Розпочати"));
+        listOfCommands.add(new BotCommand("/info", "Інформація про бота"));
+        listOfCommands.add(new BotCommand("/help", "Як працювати з ботом"));
+        listOfCommands.add(new BotCommand("/newpetition", "Створити нову петицію"));
+        listOfCommands.add(new BotCommand("/showpetitions", "Показати всі петиції"));
         try {
             this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
@@ -82,6 +85,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private String currentTaskName;
     private String currentTaskText;
+    private int id;
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -89,7 +93,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
                 switch (messageText) {
-                    case "/newtask":
+                    case "/newpetition":
+                    case "Створити петицію":
                         botState = BotState.AWAITING_TASK_NAME;
                         sendMessage(chatId, "Введіть прізвище та ім'я:");
                         break;
@@ -110,7 +115,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 //                            currentTaskText = null;
 
                             // Отправьте подтверждение или выполните другие действия
-                            sendMessage(chatId, "Задача добавлена.");
+                            sendMessage(chatId, "Петиція створена, ви можете побачити її на сайті:\nhttps://fendyx.github.io/bigtournaments/#/notes");
                             Gson gson = new Gson();
                             String json = gson.toJson(petition);
 
@@ -136,9 +141,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                                     // Получить массив петиций
                                     JSONArray petitions = jsonObject.getJSONArray("petitions");
+                                    int id = petitions.length() + 1;
 
                                     // Добавить новую петицию в массив
                                     JSONObject newPetition = new JSONObject();
+                                    newPetition.put("id", id);
                                     newPetition.put("petition", currentTaskText);
                                     newPetition.put("name", currentTaskName);
                                     petitions.put(newPetition);
@@ -168,25 +175,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 }
                             } catch (IOException | JSONException e) {
                                 e.printStackTrace();
-                    //        } finally {
-                    //            httpClient.close();
-                    //        }
                             }
 
-//                            HttpClient httpClient = HttpClientBuilder.create().build();
-//                            HttpPatch httpPatch = new HttpPatch("https://api.jsonstorage.net/v1/json/be8e5401-c3c6-4f0e-80e3-b2c5c298b404/ce5aaccb-de10-46c0-b636-2ec34f27accb?apiKey=140804b5-11a9-4b48-b42c-fb96ca00f76c");
-//
-//                            StringEntity entity = new StringEntity(json, ContentType.APPLICATION_JSON);
-//                            httpPatch.setEntity(entity);
-//
-//                            httpPatch.setHeader("Accept", "application/json");
-//                            httpPatch.setHeader("Content-type", "application/json");
-//
-//                            try {
-//                                httpClient.execute(httpPatch);
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
                         }
                          else {
                             switch (messageText){
@@ -202,6 +192,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                                     break;
                                 case "Write a petition":
                                     break;
+                                case "/showpetitions":
+                                    sendAllPetitions(chatId);
+                                    break;
                             }
 
                         }
@@ -212,7 +205,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
     private void startCommandReceived(long chatId, String name) {
-        String answer = "Welcome, " + name + " I will help you find what interests you.";
+        String answer = "Привіт, " + name + ", майбутнє в твоїх руках!";
         sendMessage(chatId, answer);
     }
 
@@ -238,7 +231,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         // First row of buttons
         KeyboardRow keyboardRow1 = new KeyboardRow();
-        keyboardRow1.add(new KeyboardButton("Write a petition"));
+        keyboardRow1.add(new KeyboardButton("Створити петицію"));
 
         // Add rows to the keyboard
         keyboardRows.add(keyboardRow1);
@@ -252,6 +245,48 @@ public class TelegramBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+    private void sendAllPetitions(long chatId) {
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        // Создать запрос GET для получения текущего JSON
+        HttpGet httpGet = new HttpGet("https://api.jsonstorage.net/v1/json/be8e5401-c3c6-4f0e-80e3-b2c5c298b404/36cdb5ce-1350-429b-b30f-25054dfa2ead?apiKey=140804b5-11a9-4b48-b42c-fb96ca00f76c");
+
+        try {
+            // Выполнить запрос GET
+            HttpResponse response = httpClient.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+
+            if (entity != null) {
+                // Получить ответ в виде строки JSON
+                String jsonResponse = EntityUtils.toString(entity);
+
+                // Преобразовать строку JSON в объект JSON
+                JSONObject jsonObject = new JSONObject(jsonResponse);
+
+                // Получить массив петиций
+                JSONArray petitions = jsonObject.getJSONArray("petitions");
+
+                // Отправить каждую петицию в отдельном сообщении
+                for (int i = 0; i < petitions.length(); i++) {
+                    JSONObject petition = petitions.getJSONObject(i);
+                    String name = petition.getString("name");
+                    String petitionText = petition.getString("petition");
+
+                    // Формирование текста сообщения
+                    StringBuilder messageText = new StringBuilder();
+                    messageText.append("Name: ").append(name).append("\n");
+                    messageText.append("Petition: ").append(petitionText);
+
+
+                }
+            }
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
 
 
 
