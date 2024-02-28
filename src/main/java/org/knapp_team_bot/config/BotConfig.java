@@ -1,4 +1,4 @@
-package io.proj3ct.demo.config;
+package org.knapp_team_bot.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

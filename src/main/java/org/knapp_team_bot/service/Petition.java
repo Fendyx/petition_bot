@@ -1,6 +1,4 @@
-package io.proj3ct.demo.service;
-
-import java.util.List;
+package org.knapp_team_bot.service;
 
 public class Petition {
     private int id;

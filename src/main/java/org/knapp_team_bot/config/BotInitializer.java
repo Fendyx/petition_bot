@@ -1,6 +1,6 @@
-package io.proj3ct.demo.config;
+package org.knapp_team_bot.config;
 
-import io.proj3ct.demo.service.TelegramBot;
+import org.knapp_team_bot.service.TelegramBot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
