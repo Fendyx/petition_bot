@@ -18,11 +18,15 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.objects.Contact;
+import org.telegram.telegrambots.meta.api.methods.send.SendContact;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -102,12 +106,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                         currentTaskText = messageText;
                         botState = BotState.DEFAULT;
 
-                        // Создайте объект Petition или выполните другие действия
-                        Petition petition = new Petition(currentTaskName, currentTaskText);
+                        String username = update.getMessage().getFrom().getUserName();
 
-                        // Очистите переменные после создания петиции
-//                            currentTaskName = null;
-//                            currentTaskText = null;
+                        // Создайте объект Petition или выполните другие действия
+                        Petition petition = new Petition(currentTaskName, currentTaskText, username, chatId);
+
 
                         // Отправьте подтверждение или выполните другие действия
                         sendMessage(chatId, "Петиція створена, ви можете побачити її на сайті:\nhttps://fendyx.github.io/bigtournaments/#/notes");
@@ -120,7 +123,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         HttpClient httpClient = HttpClientBuilder.create().build();
 
                         // Создать запрос GET для получения текущего JSON
-                        HttpGet httpGet = new HttpGet("https://api.jsonstorage.net/v1/json/be8e5401-c3c6-4f0e-80e3-b2c5c298b404/36cdb5ce-1350-429b-b30f-25054dfa2ead?apiKey=140804b5-11a9-4b48-b42c-fb96ca00f76c");
+                        HttpGet httpGet = new HttpGet("https://api.jsonstorage.net/v1/json/be8e5401-c3c6-4f0e-80e3-b2c5c298b404/19e70c0e-3265-4b57-9d47-98fac61b358b?apiKey=140804b5-11a9-4b48-b42c-fb96ca00f76c");
 
                         try {
                             // Выполнить запрос GET
@@ -143,6 +146,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 newPetition.put("id", id);
                                 newPetition.put("petition", currentTaskText);
                                 newPetition.put("name", currentTaskName);
+                                newPetition.put("username", username);
+                                newPetition.put("chatId:", chatId);
                                 petitions.put(newPetition);
 
                                 // Обновить JSON объект
@@ -152,7 +157,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 String updatedJson = jsonObject.toString();
 
                                 // Создать запрос PATCH
-                                HttpPut httpPatch = new HttpPut("https://api.jsonstorage.net/v1/json/be8e5401-c3c6-4f0e-80e3-b2c5c298b404/36cdb5ce-1350-429b-b30f-25054dfa2ead?apiKey=140804b5-11a9-4b48-b42c-fb96ca00f76c");
+                                HttpPut httpPatch = new HttpPut("https://api.jsonstorage.net/v1/json/be8e5401-c3c6-4f0e-80e3-b2c5c298b404/19e70c0e-3265-4b57-9d47-98fac61b358b?apiKey=140804b5-11a9-4b48-b42c-fb96ca00f76c");
 
                                 // Установить содержимое запроса PATCH
                                 StringEntity patchEntity = new StringEntity(updatedJson, ContentType.APPLICATION_JSON);
@@ -184,8 +189,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 break;
                             case "/info":
                                 sendMessage(chatId, INFOTEXT);
-                                break;
-                            case "Write a petition":
                                 break;
                             case "/showpetitions":
                                 sendAllPetitions(chatId);
@@ -240,6 +243,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+
+
     private void sendAllPetitions(long chatId) {
         HttpClient httpClient = HttpClientBuilder.create().build();
 

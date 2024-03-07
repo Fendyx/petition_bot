@@ -52,6 +52,14 @@
 			<version>20231013</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>4.2.0</version> <!-- Укажите здесь актуальную версию Mockito -->
+			<scope>test</scope>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>

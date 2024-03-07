@@ -1,13 +1,19 @@
 package org.knapp_team_bot.service;
 
+import org.springframework.core.SpringVersion;
+
 public class Petition {
     private int id;
     private String name;
     private String petition;
+    private String username;
+    private long  chatId;
 
-    public Petition(String name, String petition){
+    public Petition(String name, String petition, String username,long chatId){
         this.name = name;
         this.petition = petition;
+        this.username = username;
+        this.chatId = chatId;
     }
 
 
